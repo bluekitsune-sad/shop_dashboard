@@ -1,0 +1,77 @@
+
+> shop-dashboard@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.5 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.34:3000
+- Environments: .env
+✓ Ready in 1778ms
+✓ Running next.config.ts took 117ms
+⚠ Slow filesystem detected. The benchmark took 436ms. If \\?\E:\code\Shop_dashboard\.next\dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+
+ GET / 200 in 1452ms (next.js: 949ms, application-code: 502ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <RootLayout>
+                        <html lang="en" className="geist_a715...">
+                          <body
+                            className="min-h-full flex flex-col"
+-                           data-lbjfkvc="1"
+-                           data-ttcpsuq="1"
+                          >
+                  ...
+ 
+ GET /inventory 200 in 567ms (next.js: 75ms, application-code: 492ms)
+ GET /inventory 200 in 89ms (next.js: 6ms, application-code: 84ms)
+[AUTH-ACTIONS module loaded] function
+⨯ TypeError: formData.get is not a function
+    at login (src\app\(app)\auth-actions.ts:10:35)
+   8 |
+   9 | export async function login(prevState: LoginState, formData: FormData): Promise<LoginState> {
+> 10 |   const entered = String(formData.get("pin") ?? "").trim();
+     |                                   ^
+  11 |
+  12 |   if (!entered || entered !== getPin()) {
+  13 |     return { error: "Incorrect PIN. Please try again." }; {
+  digest: '4209209296'
+}
+ POST /inventory 500 in 774ms (next.js: 10ms, application-code: 764ms)
+  └─ ƒ login(null, "1234") in 2ms src/app/(app)/auth-actions.ts
+ GET /inventory 200 in 206ms (next.js: 14ms, application-code: 191ms)
+ POST /inventory 200 in 237ms (next.js: 32ms, application-code: 205ms)
+  └─ ƒ login(null, {}) in 16ms src/app/(app)/auth-actions.ts
+ GET /inventory/categories 200 in 346ms (next.js: 145ms, application-code: 201ms)
+ GET /inventory 200 in 99ms (next.js: 7ms, application-code: 92ms)
+ POST /inventory 200 in 77ms (next.js: 9ms, application-code: 69ms)
+  └─ ƒ login(null, {}) in 2ms src/app/(app)/auth-actions.ts
+ POST /inventory/categories 200 in 404ms (next.js: 14ms, application-code: 391ms)
+  └─ ƒ createCategoryAction({"name":"Q-verify-94772"}) in 253ms src/app/(app)/inventory/categories/actions.ts
+✓ Compiled in 364ms
+ GET / 200 in 75ms (next.js: 18ms, application-code: 57ms)
