@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon, ShoppingCartIcon } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,15 @@ export function ProductCards({ products }: { products: ProductListItem[] }) {
                 <StockStatusBadge stockQuantity={p.stockQuantity} minimumStock={p.minimumStock} />
               </div>
 
-              <Button variant="outline" size="sm" render={<Link href={`/inventory/${p.id}`} />}>
-                View
-              </Button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button variant="default" size="sm" render={<Link href={`/sell?product=${p.id}`} />}>
+                  <ShoppingCartIcon className="size-4" />
+                  Sell
+                </Button>
+                <Button variant="outline" size="sm" render={<Link href={`/inventory/${p.id}`} />}>
+                  View
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </li>

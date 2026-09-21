@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeftIcon, HistoryIcon } from "lucide-react";
+import { ArrowLeftIcon, HistoryIcon, ShoppingCartIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StockStatusBadge } from "@/components/stock-status-badge";
 import { ProductActions } from "@/components/products/product-actions";
-import { getProduct } from "@/lib/db/repository";
+import { getProduct, listMovements } from "@/lib/db/repository";
 import { formatMoney } from "@/lib/money";
+import { formatActivityDate } from "@/lib/time";
+import { MOVEMENT_TYPE_LABELS, signedQuantity } from "@/lib/movements";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   const { product } = row;
+  const movements = await listMovements({ productId: product.id, limit: 20 });
 
   const details: { label: string; value: string }[] = [
     { label: "SKU", value: product.sku ?? "—" },
@@ -75,6 +78,21 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </CardContent>
       </Card>
 
+      {!product.isArchived ? (
+        <div className="flex flex-col items-stretch justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center">
+          <div>
+            <p className="font-medium">Sell this product</p>
+            <p className="text-sm text-muted-foreground">
+              Stock drops automatically and the sale is recorded.
+            </p>
+          </div>
+          <Button size="lg" render={<Link href={`/sell?product=${product.id}`} />}>
+            <ShoppingCartIcon className="size-4" />
+            Sell
+          </Button>
+        </div>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -84,21 +102,42 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <CardDescription>Add, sold, and adjusted movements for this product.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-10 text-center">
-            <p className="text-sm font-medium">No stock activity yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Stock changes will appear here automatically.
-            </p>
-          </div>
+          {movements.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-10 text-center">
+              <p className="text-sm font-medium">No stock activity yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Stock changes will appear here automatically.
+              </p>
+            </div>
+          ) : (
+            <ul className="divide-y">
+              {movements.map(({ movement, productName }) => (
+                <li key={movement.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="font-medium">
+                      {MOVEMENT_TYPE_LABELS[movement.type]}
+                      {movement.reason ? ` — ${movement.reason}` : ""}
+                    </p>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {productName}
+                      {movement.unitPrice !== null ? ` · ${formatMoney(movement.unitPrice)}/unit` : ""}{" "}
+                      · {formatActivityDate(movement.createdAt.getTime())}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`shrink-0 tabular-nums ${
+                      movement.quantity > 0 ? "text-emerald-600" : movement.type === "SOLD" ? "text-destructive" : ""
+                    }`}
+                  >
+                    {signedQuantity(movement.quantity)}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
-
-      <div className="flex items-center gap-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-        <Badge variant="outline" className="shrink-0">
-          Coming next
-        </Badge>
-        Add Stock, Sell, and Adjust actions will appear here.
-      </div>
     </div>
   );
 }

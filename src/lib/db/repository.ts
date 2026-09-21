@@ -1,10 +1,11 @@
-import { and, desc, eq, gte, like, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, like, lt, or, sql } from "drizzle-orm";
 
 import { paisaFromRupees } from "@/lib/money";
 import type { ProductFormOutput } from "@/lib/validation";
 import { db } from "@/lib/db";
-import { categories, products } from "@/lib/db/schema";
+import { categories, inventoryMovements, products, sales } from "@/lib/db/schema";
 import type { StockStatus } from "@/lib/stock";
+import { endOfToday, startOfToday } from "@/lib/time";
 
 export type StatusFilter = StockStatus | "all";
 
@@ -110,22 +111,32 @@ export async function createProduct(input: ProductFormOutput): Promise<typeof pr
     throw new Error("Selected category does not exist");
   }
 
-  const [row] = await db
-    .insert(products)
-    .values({
-      categoryId: input.categoryId,
-      name: input.name,
-      brand: input.brand ?? null,
-      sku: input.sku ?? null,
-      purchasePrice: paisaFromRupees(input.purchasePrice),
-      sellingPrice: paisaFromRupees(input.sellingPrice),
-      stockQuantity: input.stockQuantity,
-      minimumStock: input.minimumStock,
-      imageUrl: input.imageUrl ?? null,
-      notes: input.notes ?? null,
-    })
-    .returning();
-  return row;
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(products)
+      .values({
+        categoryId: input.categoryId,
+        name: input.name,
+        brand: input.brand ?? null,
+        sku: input.sku ?? null,
+        purchasePrice: paisaFromRupees(input.purchasePrice),
+        sellingPrice: paisaFromRupees(input.sellingPrice),
+        stockQuantity: input.stockQuantity,
+        minimumStock: input.minimumStock,
+        imageUrl: input.imageUrl ?? null,
+        notes: input.notes ?? null,
+      })
+      .returning();
+
+    await tx.insert(inventoryMovements).values({
+      productId: row.id,
+      type: "STOCK_ADDED",
+      quantity: row.stockQuantity,
+      reason: "Initial stock",
+    });
+
+    return row;
+  });
 }
 
 export async function updateProduct(id: number, input: ProductFormOutput): Promise<void> {
@@ -163,4 +174,165 @@ export async function setProductArchived(id: number, archived: boolean): Promise
     .update(products)
     .set({ isArchived: archived, updatedAt: new Date() })
     .where(eq(products.id, id));
+}
+
+export interface SellableProduct {
+  id: number;
+  name: string;
+  brand: string | null;
+  stockQuantity: number;
+  sellingPrice: number;
+  categoryName: string | null;
+}
+
+export async function listProductsForSell(): Promise<SellableProduct[]> {
+  return db
+    .select({
+      id: products.id,
+      name: products.name,
+      brand: products.brand,
+      stockQuantity: products.stockQuantity,
+      sellingPrice: products.sellingPrice,
+      categoryName: categories.name,
+    })
+    .from(products)
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .where(eq(products.isArchived, false))
+    .orderBy(products.name);
+}
+
+export interface MovementWithProduct {
+  movement: typeof inventoryMovements.$inferSelect;
+  productName: string;
+}
+
+export async function listMovements(
+  options: { productId?: number; limit?: number } = {},
+): Promise<MovementWithProduct[]> {
+  const conditions: ReturnType<typeof eq>[] = [];
+  if (options.productId !== undefined) {
+    conditions.push(eq(inventoryMovements.productId, options.productId));
+  }
+
+  const query = db
+    .select({ movement: inventoryMovements, productName: products.name })
+    .from(inventoryMovements)
+    .innerJoin(products, eq(inventoryMovements.productId, products.id))
+    .where(and(...conditions))
+    .orderBy(desc(inventoryMovements.createdAt));
+
+  if (options.limit !== undefined) {
+    query.limit(options.limit);
+  }
+  return query;
+}
+
+export interface SellResult {
+  newStock: number;
+  saleId: number;
+  totalAmountPaisa: number;
+}
+
+/**
+ * Record a sale atomically: validate stock, insert the sale + a SOLD movement,
+ * then decrease stock. Stock can never go negative (validated + DB check).
+ */
+export async function sellProduct(
+  productId: number,
+  quantity: number,
+  unitPricePaisa: number,
+): Promise<SellResult> {
+  return db.transaction(async (tx) => {
+    const [row] = await tx.select().from(products).where(eq(products.id, productId)).limit(1);
+    if (!row) {
+      throw new Error("Product not found.");
+    }
+    if (row.isArchived) {
+      throw new Error("Archived products cannot be sold.");
+    }
+    if (row.stockQuantity < quantity) {
+      throw new Error(`Only ${row.stockQuantity} in stock.`);
+    }
+
+    const totalAmountPaisa = quantity * unitPricePaisa;
+
+    const [sale] = await tx
+      .insert(sales)
+      .values({
+        productId,
+        quantity,
+        sellingPrice: unitPricePaisa,
+        purchasePrice: row.purchasePrice,
+        totalAmount: totalAmountPaisa,
+      })
+      .returning();
+
+    await tx.insert(inventoryMovements).values({
+      productId,
+      type: "SOLD",
+      quantity: -quantity,
+      unitPrice: unitPricePaisa,
+      referenceId: sale.id,
+    });
+
+    const newStock = row.stockQuantity - quantity;
+    await tx
+      .update(products)
+      .set({ stockQuantity: newStock, updatedAt: new Date() })
+      .where(eq(products.id, productId));
+
+    return { newStock, saleId: sale.id, totalAmountPaisa };
+  });
+}
+
+export interface DashboardStats {
+  totalProducts: number;
+  totalStock: number;
+  lowStock: number;
+  outOfStock: number;
+  inventoryValuePaisa: number;
+  salesToday: number;
+  itemsSoldToday: number;
+  revenueTodayPaisa: number;
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const active = eq(products.isArchived, false);
+
+  const [productStats] = await db
+    .select({
+      totalProducts: count(),
+      totalStock: sql<number>`coalesce(sum(${products.stockQuantity}), 0)`,
+      lowStock: sql<number>`coalesce(sum(case when ${products.stockQuantity} > 0 and ${products.stockQuantity} <= ${products.minimumStock} then 1 else 0 end), 0)`,
+      outOfStock: sql<number>`coalesce(sum(case when ${products.stockQuantity} = 0 then 1 else 0 end), 0)`,
+      inventoryValuePaisa: sql<number>`coalesce(sum(${products.purchasePrice} * ${products.stockQuantity}), 0)`,
+    })
+    .from(products)
+    .where(active);
+
+  const dayStart = startOfToday();
+  const [saleStats] = await db
+    .select({
+      salesToday: count(),
+      itemsSoldToday: sql<number>`coalesce(sum(${sales.quantity}), 0)`,
+      revenueTodayPaisa: sql<number>`coalesce(sum(${sales.totalAmount}), 0)`,
+    })
+    .from(sales)
+    .where(
+      and(
+        gte(sales.createdAt, new Date(dayStart)),
+        lt(sales.createdAt, new Date(endOfToday())),
+      ),
+    );
+
+  return {
+    totalProducts: productStats.totalProducts,
+    totalStock: productStats.totalStock,
+    lowStock: productStats.lowStock,
+    outOfStock: productStats.outOfStock,
+    inventoryValuePaisa: productStats.inventoryValuePaisa,
+    salesToday: saleStats.salesToday,
+    itemsSoldToday: saleStats.itemsSoldToday,
+    revenueTodayPaisa: saleStats.revenueTodayPaisa,
+  };
 }

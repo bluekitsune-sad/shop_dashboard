@@ -96,7 +96,15 @@ export function CategoryManager({ categories }: { categories: CategoryNode[] }) 
                   <Label>Parent category</Label>
                   <Select value={parentId} onValueChange={setParentId}>
                     <SelectTrigger className="w-full justify-between text-left">
-                      <SelectValue placeholder="Top-level (no parent)" />
+                      <SelectValue>
+                        {(value) => (
+                          <span>
+                            {value
+                              ? (roots.find((r) => String(r.id) === value)?.name ?? "Top-level (no parent)")
+                              : "Top-level (no parent)"}
+                          </span>
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Top-level (no parent)</SelectItem>

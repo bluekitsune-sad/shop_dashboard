@@ -98,41 +98,36 @@ export function ProductForm({
         {errors.name ? <p className="text-sm font-medium text-destructive">{errors.name.message}</p> : null}
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>
-            Category <span className="text-destructive">*</span>
-          </Label>
-          <Controller
-            control={control}
-            name="categoryId"
-            render={({ field }) => (
-              <CategorySelect
-                categories={categories}
-                value={field.value || null}
-                onChange={(v) => field.onChange(v ?? "")}
-                invalid={Boolean(errors.categoryId)}
-              />
-            )}
-          />
-          {errors.categoryId ? <p className="text-sm font-medium text-destructive">{errors.categoryId.message}</p> : null}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="brand">Brand</Label>
-          <Input id="brand" placeholder="e.g. Samsung" {...register("brand")} />
-        </div>
+      <div className="space-y-2">
+        <Controller
+          control={control}
+          name="categoryId"
+          render={({ field }) => (
+            <CategorySelect
+              categories={categories}
+              value={field.value || null}
+              onChange={(v) => field.onChange(v ?? "")}
+              invalid={Boolean(errors.categoryId)}
+            />
+          )}
+        />
+        {errors.categoryId ? <p className="text-sm font-medium text-destructive">{errors.categoryId.message}</p> : null}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
+          <Label htmlFor="brand">Brand</Label>
+          <Input id="brand" placeholder="e.g. Apple" {...register("brand")} />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="sku">SKU / Product Code</Label>
           <Input id="sku" placeholder="Optional" {...register("sku")} />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">Image URL</Label>
-          <Input id="imageUrl" type="url" inputMode="url" placeholder="Optional" {...register("imageUrl")} />
-        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="imageUrl">Image URL</Label>
+        <Input id="imageUrl" type="url" inputMode="url" placeholder="Optional" {...register("imageUrl")} />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">

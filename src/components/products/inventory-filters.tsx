@@ -83,7 +83,15 @@ export function InventoryFilters({
       <div className="flex gap-3">
         <Select value={categoryId || null} onValueChange={(v) => update({ category: v ?? "" })}>
           <SelectTrigger className="w-[8.5rem] justify-between text-left" aria-label="Filter by category">
-            <SelectValue placeholder="All categories" />
+            <SelectValue>
+              {(value) => (
+                <span>
+                  {value
+                    ? (categories.find((c) => String(c.id) === value)?.name ?? "All categories")
+                    : "All categories"}
+                </span>
+              )}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All categories</SelectItem>
@@ -106,7 +114,11 @@ export function InventoryFilters({
 
         <Select value={status || "all"} onValueChange={(v) => update({ status: v ?? "all" })}>
           <SelectTrigger className="w-[8.5rem] justify-between text-left" aria-label="Filter by stock status">
-            <SelectValue placeholder="All stock" />
+            <SelectValue>
+              {(value) => (
+                <span>{STATUS_OPTIONS.find((s) => s.value === value)?.label ?? "All stock"}</span>
+              )}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((s) => (

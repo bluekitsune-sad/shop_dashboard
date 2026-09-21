@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, ShoppingCartIcon } from "lucide-react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -35,15 +35,26 @@ export function ProductTable({ products }: { products: ProductListItem[] }) {
               </TableCell>
               <TableCell className="text-right tabular-nums">{formatMoney(p.sellingPrice)}</TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  render={<Link href={`/inventory/${p.id}`} />}
-                  aria-label={`View ${p.name}`}
-                >
-                  <ExternalLinkIcon className="size-4" />
-                  View
-                </Button>
+                <div className="flex justify-end gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={<Link href={`/sell?product=${p.id}`} />}
+                    aria-label={`Sell ${p.name}`}
+                  >
+                    <ShoppingCartIcon className="size-4" />
+                    Sell
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    render={<Link href={`/inventory/${p.id}`} />}
+                    aria-label={`View ${p.name}`}
+                  >
+                    <ExternalLinkIcon className="size-4" />
+                    View
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

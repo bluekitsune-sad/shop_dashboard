@@ -43,6 +43,8 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  render,
+  nativeButton,
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
@@ -50,6 +52,11 @@ function Button({
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
+      render={render}
+      // Base UI treats a Button as a native <button> by default. When the root
+      // is something else (a Link or <a> via `render`), telling it so avoids
+      // the "expected a native button" accessibility warning.
+      nativeButton={nativeButton ?? (render ? false : true)}
     />
   )
 }

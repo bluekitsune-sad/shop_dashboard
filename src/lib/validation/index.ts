@@ -60,3 +60,21 @@ export const categoryFormSchema = z.object({
 
 export type CategoryFormValues = z.input<typeof categoryFormSchema>;
 export type CategoryFormOutput = z.output<typeof categoryFormSchema>;
+
+/**
+ * A sale is entered as a product, quantity, and unit price. Quantity and price
+ * arrive from the client as strings (shared React Hook Form / server action wire)
+ * and are parsed server-side.
+ */
+export const sellFormSchema = z.object({
+  productId: ruipesPositiveInt("product"),
+  quantity: rupeesInput(
+    "quantity",
+    (n) => Number.isInteger(n) && n > 0,
+    "Quantity must be a positive whole number",
+  ),
+  unitPrice: rupeesInput("unit price"),
+});
+
+export type SellFormValues = z.input<typeof sellFormSchema>;
+export type SellFormOutput = z.output<typeof sellFormSchema>;
