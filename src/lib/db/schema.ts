@@ -100,3 +100,14 @@ export const sales = sqliteTable(
     index("sales_created_at_idx").on(t.createdAt),
   ],
 );
+
+/** Simple key/value store for app settings (e.g. the shop PIN when it is
+ * changed from the UI). */
+export const settings = sqliteTable("settings", (t) => ({
+  key: t.text("key").primaryKey(),
+  value: t.text("value").notNull(),
+  updatedAt: t
+    .integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+}));

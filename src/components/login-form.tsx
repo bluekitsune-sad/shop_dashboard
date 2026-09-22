@@ -31,7 +31,7 @@ export function LoginForm() {
             <LockKeyholeIcon className="size-6" />
           </div>
           <CardTitle>Shop Dashboard</CardTitle>
-          <CardDescription>Enter the shop PIN to continue.</CardDescription>
+          <CardDescription>Enter the shop PIN (up to 6 digits) to continue.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -51,11 +51,16 @@ export function LoginForm() {
                 name="pin"
                 type="password"
                 inputMode="numeric"
+                pattern="[0-9]*"
                 autoComplete="current-password"
                 autoFocus
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  if (cleaned !== e.target.value) e.target.value = cleaned;
+                }}
                 className="text-center text-2xl tracking-[0.5em]"
-                maxLength={12}
-                placeholder="••••"
+                maxLength={6}
+                placeholder="••••••"
                 aria-describedby={state.error ? "pin-error" : undefined}
               />
               {state.error ? (

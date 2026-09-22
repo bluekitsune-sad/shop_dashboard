@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HistoryIcon, LayoutDashboardIcon, LogOutIcon, PackageIcon, ShoppingCartIcon, StoreIcon } from "lucide-react";
+import { HistoryIcon, LayoutDashboardIcon, LogOutIcon, PackageIcon, SettingsIcon, ShoppingCartIcon, StoreIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { logout } from "@/app/(app)/auth-actions";
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/inventory", label: "Inventory", icon: PackageIcon },
   { href: "/sell", label: "Sell", icon: ShoppingCartIcon },
   { href: "/activity", label: "Activity", icon: HistoryIcon },
+  { href: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
@@ -65,7 +66,7 @@ export function SiteNav() {
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)] md:hidden"
       >
-        <div className="grid h-16 grid-cols-4">
+        <div className="grid h-16 grid-cols-5">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             return (

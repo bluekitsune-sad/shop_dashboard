@@ -78,3 +78,22 @@ export const sellFormSchema = z.object({
 
 export type SellFormValues = z.input<typeof sellFormSchema>;
 export type SellFormOutput = z.output<typeof sellFormSchema>;
+
+/** The shop PIN is a number with up to 6 digits (e.g. "1234" stays valid). */
+const pinInput = z
+  .string()
+  .trim()
+  .regex(/^\d{1,6}$/, "PIN must be 1–6 digits with no spaces or symbols");
+
+export const pinChangeSchema = z
+  .object({
+    currentPin: z.string().trim().min(1, "Enter your current PIN"),
+    newPin: pinInput,
+    confirmPin: pinInput,
+  })
+  .refine((data) => data.newPin === data.confirmPin, {
+    message: "New PINs do not match",
+    path: ["confirmPin"],
+  });
+
+export type PinChangeValues = z.input<typeof pinChangeSchema>;
