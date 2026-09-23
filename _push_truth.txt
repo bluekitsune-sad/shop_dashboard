@@ -1,0 +1,4 @@
+﻿HEAD===b7e506c feat: professional typography and softer warm-paper theme to ease eye strain
+AHEAD===0
+REMOTE-URL===https://github.com/bluekitsune-sad/shop_dashboard.git
+STATUS=== D eslint.config.mjs ||  M package-lock.json ||  M package.json ||  D postcss.config.mjs
