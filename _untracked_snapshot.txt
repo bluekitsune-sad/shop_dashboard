@@ -1,8 +1,0 @@
-﻿ D eslint.config.mjs
- M package-lock.json
- M package.json
- D postcss.config.mjs
- M src/app/globals.css
- M src/app/layout.tsx
-?? _fix_stderr.txt
-?? _iphone_fix.mjs
